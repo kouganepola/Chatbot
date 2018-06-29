@@ -1,6 +1,6 @@
-
-
-
+import re
+import pandas as pd
+import numpy as np
 
 #load data
 movie_lines_file = open('movie_lines.txt', encoding = 'utf-8', errors='ignore').read();
@@ -15,8 +15,6 @@ for line in movie_lines:
     _line = line.split(' +++$+++ ')
     if len(_line) == 5:
         id2line[_line[0]] = _line[4]        #id --> utterance
-
-
 
 
 convs=[]
@@ -36,27 +34,8 @@ for conv in convs:
         questions.append(id2line[conv[i]])
         answers.append(id2line[conv[i+1]])
 
-
-# In[9]:
-
-# Check if we have loaded the data correctly
-limit = 0
-for i in range(limit, limit+5):
-    print(questions[i])
-    print(answers[i])
-    print()
-
-
-# In[10]:
-
-# Compare lengths of questions and answers
-print(len(questions))
-print(len(answers))
-
-
 def clean_text(text):
-    '''Clean text by removing unnecessary characters and altering the format of words.'''
-
+    
     text = text.lower()
     
     text = re.sub(r"i'm", "i am", text)
@@ -82,9 +61,6 @@ def clean_text(text):
     
     return text
 
-
-# In[12]:
-
 # Clean the data
 clean_questions = []
 for question in questions:
@@ -95,19 +71,6 @@ for answer in answers:
     clean_answers.append(clean_text(answer))
 
 
-# In[13]:
-
-# Take a look at some of the data to ensure that it has been cleaned well.
-limit = 0
-for i in range(limit, limit+5):
-    print(clean_questions[i])
-    print(clean_answers[i])
-    print()
-
-
-# In[14]:
-
-# Find the length of sentences
 lengths = []
 for question in clean_questions:
     lengths.append(len(question.split()))
@@ -117,22 +80,8 @@ for answer in clean_answers:
 # Create a dataframe so that the values can be inspected
 lengths = pd.DataFrame(lengths, columns=['counts'])
 
-
-# In[15]:
-
 lengths.describe()
 
-
-# In[16]:
-
-print(np.percentile(lengths, 80))
-print(np.percentile(lengths, 85))
-print(np.percentile(lengths, 90))
-print(np.percentile(lengths, 95))
-print(np.percentile(lengths, 99))
-
-
-# In[17]:
 
 # Remove questions and answers that are shorter than 2 words and longer than 20 words.
 min_line_length = 2
@@ -161,16 +110,6 @@ for answer in short_answers_temp:
     i += 1
 
 
-# In[18]:
-
-# Compare the number of lines we will use with the total number of lines.
-print("# of questions:", len(short_questions))
-print("# of answers:", len(short_answers))
-print("% of data used: {}%".format(round(len(short_questions)/len(questions),4)*100))
-
-
-# In[19]:
-
 # Create a dictionary for the frequency of the vocabulary
 vocab = {}
 for question in short_questions:
@@ -188,31 +127,10 @@ for answer in short_answers:
             vocab[word] += 1
 
 
-# In[20]:
-
-# Remove rare words from the vocabulary.
-# We will aim to replace fewer than 5% of words with <UNK>
-# You will see this ratio soon.
 threshold = 10
-count = 0
-for k,v in vocab.items():
-    if v >= threshold:
-        count += 1
-
-
-# In[21]:
-
-print("Size of total vocab:", len(vocab))
-print("Size of vocab we will use:", count)
-
-
-# In[22]:
-
-# In case we want to use a different vocabulary sizes for the source and target text, 
-# we can set different threshold values.
-# Nonetheless, we will create dictionaries to provide a unique integer for each word.
 questions_vocab_to_int = {}
 
+# tokenize words
 word_num = 0
 for word, count in vocab.items():
     if count >= threshold:
@@ -227,10 +145,7 @@ for word, count in vocab.items():
         answers_vocab_to_int[word] = word_num
         word_num += 1
 
-
-# In[23]:
-
-# Add the unique tokens to the vocabulary dictionaries.
+# Add the unique tokens 
 codes = ['<PAD>','<EOS>','<UNK>','<GO>']
 
 for code in codes:
@@ -239,35 +154,17 @@ for code in codes:
 for code in codes:
     answers_vocab_to_int[code] = len(answers_vocab_to_int)+1
 
-
-# In[24]:
-
-# Create dictionaries to map the unique integers to their respective words.
-# i.e. an inverse dictionary for vocab_to_int.
+#inverse vocab dictionaries
 questions_int_to_vocab = {v_i: v for v, v_i in questions_vocab_to_int.items()}
 answers_int_to_vocab = {v_i: v for v, v_i in answers_vocab_to_int.items()}
 
-
-# In[25]:
-
-# Check the length of the dictionaries.
-print(len(questions_vocab_to_int))
-print(len(questions_int_to_vocab))
-print(len(answers_vocab_to_int))
-print(len(answers_int_to_vocab))
-
-
-# In[26]:
 
 # Add the end of sentence token to the end of every answer.
 for i in range(len(short_answers)):
     short_answers[i] += ' <EOS>'
 
+# Convert the text to integers.
 
-# In[27]:
-
-# Convert the text to integers. 
-# Replace any words that are not in the respective vocabulary with <UNK> 
 questions_int = []
 for question in short_questions:
     ints = []
@@ -289,14 +186,9 @@ for answer in short_answers:
     answers_int.append(ints)
 
 
-# In[28]:
-
 # Check the lengths
 print(len(questions_int))
 print(len(answers_int))
-
-
-# In[29]:
 
 # Calculate what percentage of all words have been replaced with <UNK>
 word_count = 0
@@ -321,12 +213,6 @@ print("Number of times <UNK> is used:", unk_count)
 print("Percent of words that are <UNK>: {}%".format(round(unk_ratio,3)))
 
 
-# In[30]:
-
-# Sort questions and answers by the length of questions.
-# This will reduce the amount of padding during training
-# Which should speed up training and help to reduce the loss
-
 sorted_questions = []
 sorted_answers = []
 
@@ -339,10 +225,13 @@ for length in range(1, max_line_length+1):
 print(len(sorted_questions))
 print(len(sorted_answers))
 print()
+
 for i in range(3):
     print(sorted_questions[i])
     print(sorted_answers[i])
     print()
-##def model_inputs():
 
     
+####def model_inputs():
+##
+##    
