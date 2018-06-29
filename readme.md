@@ -1,0 +1,1 @@
+This project is a chatbot based on tensorflow trained on cornell movie dataset.
