@@ -185,34 +185,6 @@ for answer in short_answers:
             ints.append(answers_vocab_to_int[word])
     answers_int.append(ints)
 
-
-# Check the lengths
-print(len(questions_int))
-print(len(answers_int))
-
-# Calculate what percentage of all words have been replaced with <UNK>
-word_count = 0
-unk_count = 0
-
-for question in questions_int:
-    for word in question:
-        if word == questions_vocab_to_int["<UNK>"]:
-            unk_count += 1
-        word_count += 1
-    
-for answer in answers_int:
-    for word in answer:
-        if word == answers_vocab_to_int["<UNK>"]:
-            unk_count += 1
-        word_count += 1
-    
-unk_ratio = round(unk_count/word_count,4)*100
-    
-print("Total number of words:", word_count)
-print("Number of times <UNK> is used:", unk_count)
-print("Percent of words that are <UNK>: {}%".format(round(unk_ratio,3)))
-
-
 sorted_questions = []
 sorted_answers = []
 
@@ -222,16 +194,7 @@ for length in range(1, max_line_length+1):
             sorted_questions.append(questions_int[i[0]])
             sorted_answers.append(answers_int[i[0]])
 
-print(len(sorted_questions))
-print(len(sorted_answers))
-print()
-
-for i in range(3):
-    print(sorted_questions[i])
-    print(sorted_answers[i])
-    print()
+    
+##def model_inputs():
 
     
-####def model_inputs():
-##
-##    
